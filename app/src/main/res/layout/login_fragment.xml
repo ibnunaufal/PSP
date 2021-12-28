@@ -53,11 +53,13 @@
                 />
             <EditText
                 android:id="@+id/ed_username"
+                android:inputType="text"
                 android:layout_width="match_parent"
                 android:layout_height="33dp"
                 android:layout_marginTop="5dp"
                 android:padding="10dp"
                 android:textSize="12dp"
+                android:nextFocusDown="@+id/ed_password"
                 android:background="@drawable/bg_ed_text"/>
             <TextView
                 android:layout_width="wrap_content"
@@ -87,6 +89,7 @@
                     android:background="@drawable/bg_ed_text"
                     android:imeOptions="actionNext"
                     android:inputType="textPassword|textNoSuggestions"
+                    android:nextFocusDown="@+id/btn_login"
                     android:padding="10dp" />
             </com.google.android.material.textfield.TextInputLayout>
             <TextView

@@ -1,5 +1,7 @@
 package id.co.solusinegeri.sms_gateway.ui.auth
 
+import android.Manifest
+import android.content.pm.PackageManager
 import androidx.lifecycle.ViewModelProvider
 import android.os.Bundle
 import android.util.Log
@@ -8,6 +10,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.Toast
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
@@ -48,7 +53,38 @@ class LoginFragment: BaseFragment<LoginViewModel, LoginFragmentBinding, ServiceR
 
             login()
         }
+        if (ContextCompat.checkSelfPermission(requireContext(),
+                Manifest.permission.SEND_SMS) !==
+            PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(requireActivity(),
+                    Manifest.permission.SEND_SMS)) {
+                ActivityCompat.requestPermissions(requireActivity(),
+                    arrayOf(Manifest.permission.SEND_SMS), 1)
+            } else {
+                ActivityCompat.requestPermissions(requireActivity(),
+                    arrayOf(Manifest.permission.SEND_SMS), 1)
+            }
+        }
     }
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>,
+                                            grantResults: IntArray) {
+        when (requestCode) {
+            1 -> {
+                if (grantResults.isNotEmpty() && grantResults[0] ==
+                    PackageManager.PERMISSION_GRANTED) {
+                    if ((ContextCompat.checkSelfPermission(requireContext(),
+                            Manifest.permission.SEND_SMS) ===
+                                PackageManager.PERMISSION_GRANTED)) {
+                        Toast.makeText(requireContext(), "Permission Granted", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    Toast.makeText(requireContext(), "Permission Denied", Toast.LENGTH_SHORT).show()
+                }
+                return
+            }
+        }
+    }
+
     private fun login(){
         view?.let { progressDialog.show(it.context) }
         binding.btnLogin.enable(false)

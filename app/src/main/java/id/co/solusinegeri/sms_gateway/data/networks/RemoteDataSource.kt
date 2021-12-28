@@ -12,8 +12,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 class RemoteDataSource {
     companion object {
  //        private const val BASE_URL = "http://192.168.10.102:9090/"
-//      private const val BASE_URL = "https://api.dev.katalis.info/"
-        private const val BASE_URL = "https://api.katalis.info/"
+      private const val BASE_URL = "https://api.dev.katalis.info/"
+//        private const val BASE_URL = "https://api.katalis.info/"
     }
 
     fun getBaseUrl(): String {
