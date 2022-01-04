@@ -18,14 +18,18 @@ class ServiceRepository(
         api.getUserInfo()
     }
     suspend fun GetNotifikasiGateway(
-        companyId: String
+        companyId: String,
+        category: String?,
+        size: String,
         ) = safeApiCall {
-        api.GetNotifikasiGateway(companyId)
+        api.GetNotifikasiGateway(companyId, category, size)
     }
     suspend fun Updategatewaysms(
-        _id: String
+        accountId : String,
+        idNotif: String
     ) = safeApiCall {
-        api.Updategatewaysms(modelUpdateGateway(_id))
+//        api.Updategatewaysms(modelUpdateGateway(accountId, idNotif))
+        api.Updategatewaysms(accountId, idNotif)
     }
 
 }

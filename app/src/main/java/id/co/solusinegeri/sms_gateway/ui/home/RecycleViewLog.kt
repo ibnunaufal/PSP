@@ -93,6 +93,7 @@ class RecycleViewLog (
                 holder.itemView.txt_item_category.text = resultItem.category
                 holder.itemView.txt_item_title.text = resultItem.title
                 holder.itemView.txt_item_category.text = resultItem.phone
+                holder.itemView.txt_datetime.text = resultItem.dateTime
             }catch (e : Exception){
             }
 //            holder.itemView.clickitem.setOnClickListener{

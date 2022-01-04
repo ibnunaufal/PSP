@@ -70,6 +70,19 @@ class UserPreferences (
         get() = dataStore.data.map { preferences ->
             preferences[KEY_COMPANYID]
         }
+    suspend fun saveCompanyName(CompanyName: String) {
+        dataStore.edit { preferences ->
+            preferences[KEY_COMPANYNAME] = CompanyName
+        }
+    }
+
+    fun getCompanyName():String?{
+        return runBlocking { CompanyName.first() }
+    }
+    val CompanyName: Flow<String?>
+        get() = dataStore.data.map { preferences ->
+            preferences[KEY_COMPANYNAME]
+        }
     suspend fun saveDeviceId(deviceId: String) {
         dataStore.edit { preferences ->
             preferences[KEY_DEVICEID] = deviceId
@@ -102,6 +115,7 @@ class UserPreferences (
         private val USER_OBJECT = preferencesKey<String>(name = "userObj")
         private val KEY_DEVICEID = preferencesKey<String>("keydeviceid")
         private val KEY_COMPANYID = preferencesKey<String>("keycompanyid")
+        private val KEY_COMPANYNAME = preferencesKey<String>("keycompanyName")
         private val KEY_CREATORID = preferencesKey<String>("keycreatorid")
 
     }

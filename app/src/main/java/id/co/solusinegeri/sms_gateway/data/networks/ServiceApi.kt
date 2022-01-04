@@ -18,14 +18,18 @@ interface ServiceApi {
     @GET("katalis/user/credential/check")
     suspend fun getUserInfo(): CheckCredentialResponse
 
-    @Headers("content-type: image/png")
+    @Headers("content-type: application/json")
     @GET("   /python/notification/get_sms/{companyId}")
     suspend fun GetNotifikasiGateway(
-        @Path("companyId") companyId: String
+        @Path("companyId") companyId: String?,
+        @Query("category") category: String?,
+        @Query("size") size: String
     ): getResponsesGateway
     @Headers("Content-Type: application/json")
-    @POST("/python/notification/update_sms")
+    @POST("/python/notification/update_sms/{accountId}/{idNotif}")
     suspend fun Updategatewaysms(
-        @Body info: modelUpdateGateway
+//        @Body info: modelUpdateGateway
+        @Path("accountId") accountId: String?,
+        @Path("idNotif") idNotif: String?
     ): UpdateGatewayResposes
 }

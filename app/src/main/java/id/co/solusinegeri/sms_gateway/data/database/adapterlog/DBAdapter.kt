@@ -12,7 +12,16 @@ class DbAdapter(context: Context) :
     SQLiteOpenHelper(context, DATABASE_NAME, null, 1) {
     override fun onCreate(db: SQLiteDatabase?) {
         if (db != null) {
-            db.execSQL("CREATE TABLE $TABLE_OFFLINEGATEWAY (_id INTEGER PRIMARY KEY AUTOINCREMENT, $COL_ACCOUNT_NAME TEXT, $COL_CATEGORY TEXT,$COL_TITLE TEXT,$COL_phone TEXT,$COL_STATUS TEXT);")
+            db.execSQL("CREATE TABLE $TABLE_OFFLINEGATEWAY (" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                    "$COL_ID_NOTIF TEXT, " +
+                    "$COL_ACCOUNT_ID TEXT, " +
+                    "$COL_ACCOUNT_NAME TEXT, " +
+                    "$COL_CATEGORY TEXT," +
+                    "$COL_TITLE TEXT," +
+                    "$COL_MESSAGE TEXT," +
+                    "$COL_PHONE TEXT," +
+                    "$COL_DATETIME TEXT);")
         }
 
     }
@@ -23,23 +32,33 @@ class DbAdapter(context: Context) :
         }
     }
     inner class TableOfflineAttendance {
-        fun addAttoffline(accountName: String, category: String,title: String,phone : String,status : String) {
+        fun addAttoffline(
+            idNotif:String, accountId: String, accountName: String, category: String,
+            title: String,message: String,phone : String, dateTime: String
+        ) {
             val db = writableDatabase;
             val newContentoffline = ContentValues()
+            newContentoffline.put(COL_ID_NOTIF, idNotif)
+            newContentoffline.put(COL_ACCOUNT_ID, accountId)
             newContentoffline.put(COL_ACCOUNT_NAME, accountName)
             newContentoffline.put(COL_CATEGORY, category)
             newContentoffline.put(COL_TITLE, title)
-            newContentoffline.put(COL_phone, phone)
-            newContentoffline.put(COL_STATUS, status)
+            newContentoffline.put(COL_MESSAGE, message)
+            newContentoffline.put(COL_PHONE, phone)
+            newContentoffline.put(COL_DATETIME, dateTime)
             db.insert(TABLE_OFFLINEGATEWAY, null, newContentoffline)
         }
         fun deleteData(id: String): Int {
             val db = writableDatabase
-            return db.delete(TABLE_OFFLINEGATEWAY, "_id = ?", arrayOf(id))
+            return db.delete(TABLE_OFFLINEGATEWAY, "id = ?", arrayOf(id))
+        }
+        fun deleteAll(){
+            val db = writableDatabase
+            db.execSQL("DELETE FROM $TABLE_OFFLINEGATEWAY")
         }
         fun getAlltrxoffline(): ArrayList<ContentLog> {
             val db = writableDatabase
-            val res = db.rawQuery("SELECT * FROM $TABLE_OFFLINEGATEWAY", null)
+            val res = db.rawQuery("SELECT * FROM $TABLE_OFFLINEGATEWAY ORDER BY $COL_DATETIME DESC", null)
             val useList = ArrayList<ContentLog>()
             if (res.moveToFirst()) {
                 while (!res.isAfterLast()) {
@@ -51,7 +70,9 @@ class DbAdapter(context: Context) :
                             res.getString(3),
                             res.getString(4),
                             res.getString(5),
-
+                            res.getString(6),
+                            res.getString(7),
+                            res.getString(8),
                         )
 
                     useList.add(model)
@@ -71,10 +92,13 @@ class DbAdapter(context: Context) :
          * Kolom pada Tabel RegisteredNFCID
          */
         val COL_ACCOUNT_NAME = "account_name"
+        val COL_ACCOUNT_ID = "accountId"
+        val COL_ID_NOTIF = "idNotif"
         val COL_CATEGORY = "category"
         val COL_TITLE = "title"
-        val COL_phone = "phone"
-        val COL_STATUS = "status"
+        val COL_MESSAGE = "message"
+        val COL_PHONE = "phone"
+        val COL_DATETIME = "dateTime"
 
 
     }
