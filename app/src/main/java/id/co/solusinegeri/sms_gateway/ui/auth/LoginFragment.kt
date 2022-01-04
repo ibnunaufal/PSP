@@ -17,6 +17,7 @@ import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import id.co.solusinegeri.sms_gateway.*
+import id.co.solusinegeri.sms_gateway.data.database.adapterlog.DbAdapter
 import id.co.solusinegeri.sms_gateway.data.networks.Resource
 import id.co.solusinegeri.sms_gateway.data.networks.ServiceApi
 import id.co.solusinegeri.sms_gateway.data.repository.ServiceRepository
@@ -24,6 +25,7 @@ import id.co.solusinegeri.sms_gateway.databinding.LoginFragmentBinding
 import id.co.solusinegeri.sms_gateway.ui.base.BaseFragment
 import id.co.solusinegeri.sms_gateway.ui.home.HomeActivity
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class LoginFragment: BaseFragment<LoginViewModel, LoginFragmentBinding, ServiceRepository>() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -99,17 +101,44 @@ class LoginFragment: BaseFragment<LoginViewModel, LoginFragmentBinding, ServiceR
                     progressDialog.dialog.dismiss()
                     Log.d("data login",it.toString())
                     val firstLogin = it.value.firstLogin
-                    lifecycleScope.launch {
-                        requireActivity().startNewActivity(HomeActivity::class.java)
-                        activity?.overridePendingTransition(0, 0)
-
-                    }
+                    getUserCredentialInfo()
                 }
                 is Resource.Failure -> handleApiError(it)
 
             }
         })
 
+    }
+    private fun getUserCredentialInfo() {
+        viewModel.getUser()
+        viewModel._users.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
+            when (it) {
+                is Resource.Success-> {
+                    val companyId = it.value.activeCompany.id
+                    val creatorId = it.value.user.accounts[0].id
+                    val username = it.value.user.name
+                    val deviceId = it.value.user.accounts[0].note
+                    val nama = it.value.user.name
+                    val companyName = it.value.companies[0].name
+                    val email = it.value.user.email
+
+//                    binding.txtGmail.setText(email)
+                    runBlocking { userPreferences.saveDeviceId(deviceId) }
+                    runBlocking { userPreferences.saveCreatorId(creatorId) }
+                    runBlocking { userPreferences.saveCompanyId(companyId) }
+                    runBlocking { userPreferences.saveCompanyName(companyName) }
+                    val companyID = "5f80685c6860831471d5237d"
+                    lifecycleScope.launch {
+                        requireActivity().startNewActivity(HomeActivity::class.java)
+                        activity?.overridePendingTransition(0, 0)
+
+                    }
+                }
+                is Resource.Failure -> handleApiError(it) {
+                }
+
+            }
+        })
     }
     override fun getViewModel()=LoginViewModel::class.java
 
