@@ -45,8 +45,13 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import java.lang.Exception
 import android.R.id.message
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.os.Build
 import android.os.Handler
 import android.widget.AdapterView
+import id.co.solusinegeri.sms_gateway.snackbar
+import id.co.solusinegeri.sms_gateway.visible
 import java.text.SimpleDateFormat
 
 class HomeFragment : BaseFragment<HomeViewModel, HomeFragmentBinding, ServiceRepository>() {
@@ -57,9 +62,13 @@ class HomeFragment : BaseFragment<HomeViewModel, HomeFragmentBinding, ServiceRep
 
     var isPaused = false
     var isCancelled = false
+    var isPausedReconnect = false
+    var isCancelledReconnect = false
     var resumeFromMillis:Long = 0
     var millisInFuture:Long = 20000
     var countDownInterval:Long = 1000
+    var millisInFuture2:Long = 2000
+    var countDownInterval2:Long = 1000
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -71,24 +80,64 @@ class HomeFragment : BaseFragment<HomeViewModel, HomeFragmentBinding, ServiceRep
 
         binding.btnLogout.setOnClickListener {
             stopTimer()
+            stopTimerReconnect()
             logout()
         }
+        binding.layoutReconnecting.visible(false)
         binding.txtCompanyName.text = runBlocking { userPreferences.getCompanyName() }
         binding.swipeRefreshLayout.setOnRefreshListener {
             binding.swipeRefreshLayout.setRefreshing(false)
-
         }
+//        binding.btnRefresh.visible(false)
+//        binding.btnRefresh.setOnClickListener {
+//            startTimer()
+//        }
+
+        adapterTransaction = RecycleViewLog(
+            requireContext(),
+            datatrx
+        )
+        adapterTransaction.notifyDataSetChanged()
+        rvMain.layoutManager = LinearLayoutManager(requireContext())
+        rvMain.adapter = adapterTransaction
     }
     fun startTimer(){
-        timer(millisInFuture,countDownInterval).start()
-        getNotifikasiGateway()
+        if(isNetworkAvailable(activity)){
+            timer(millisInFuture,countDownInterval).start()
+//            binding.btnRefresh.visible(false)
+            getNotifikasiGateway()
 
-        isCancelled = false
-        isPaused = false
+            isCancelled = false
+            isPaused = false
+        }else{
+            stopTimer()
+            startTimerReconnect()
+            timerReconnect(millisInFuture2, countDownInterval2)
+//            requireView().snackbar("Mohon periksa kembali koneksi internet anda.")
+//            binding.btnRefresh.visible(true)
+        }
+
     }
     fun stopTimer(){
+        Log.d("network", isCancelled.toString())
         isCancelled = true
+        Log.d("network", isCancelled.toString())
         isPaused = false
+    }
+
+    fun startTimerReconnect(){
+        binding.layoutReconnecting.visible(true)
+        timerReconnect(millisInFuture2,countDownInterval2).start()
+        isCancelledReconnect = false
+//        requireView().snackbar("Mohon periksa kembali koneksi internet anda.")
+    }
+
+    fun stopTimerReconnect(){
+        binding.layoutReconnecting.visible(false)
+        Log.d("network", isCancelledReconnect.toString())
+        isCancelledReconnect = true
+        Log.d("network", isCancelledReconnect.toString())
+        isPausedReconnect = false
     }
 
     // Method to configure and return an instance of CountDownTimer object
@@ -98,23 +147,59 @@ class HomeFragment : BaseFragment<HomeViewModel, HomeFragmentBinding, ServiceRep
                 val timeRemaining = "Seconds remaining ${millisUntilFinished/1000} $isCancelled"
 
                 if (isPaused){
-                    Log.d("timer ", "Paused\n${millisUntilFinished/1000} $isCancelled")
+                    Log.d("timer ", "Paused ${millisUntilFinished/1000} $isCancelled")
                     resumeFromMillis = millisUntilFinished
                     cancel()
                 }else if (isCancelled){
-                    Log.d("timer ", "Canceled\n${millisUntilFinished/1000} $isCancelled")
+                    Log.d("timer ", "Canceled ${millisUntilFinished/1000} $isCancelled")
                     cancel()
                 }else{
                     Log.d("timer", timeRemaining)
-                    binding.txtTimer.text = (millisUntilFinished/1000).toString()
+//                    binding.txtTimer.text = (millisUntilFinished/1000).toString()
                 }
             }
 
             override fun onFinish() {
                 Log.d("timer", "Finish")
                 Log.d("timer", "Restarting...")
-                binding.txtTimer.text = "Restarting..."
+//                binding.txtTimer.text = "Restarting..."
                 startTimer()
+            }
+        }
+
+    }
+
+    // Method to configure and return an instance of CountDownTimer object
+    private fun timerReconnect(millisInFuture:Long,countDownInterval:Long):CountDownTimer{
+        return object: CountDownTimer(millisInFuture,countDownInterval){
+            override fun onTick(millisUntilFinished: Long){
+                val timeRemaining = "Seconds remaining ${millisUntilFinished/1000} $isCancelled"
+
+                if (isPausedReconnect){
+                    Log.d("timer reconnect", "Paused ${millisUntilFinished/1000} $isCancelled")
+                    resumeFromMillis = millisUntilFinished
+                    cancel()
+                }else if (isCancelledReconnect){
+                    Log.d("timer Reconnect Stop", "Canceled ${millisUntilFinished/1000} $isCancelled")
+                    cancel()
+                }else{
+                    Log.d("timer Reconnecting....", timeRemaining)
+                    if(isNetworkAvailable(activity)){
+                        Log.d("timer Reconnect Success", timeRemaining)
+                        binding.layoutReconnecting.visible(false)
+                        stopTimerReconnect()
+                        startTimer()
+                        Toast.makeText(context, "Terhubung ke Internet", Toast.LENGTH_SHORT).show()
+                    }
+//                    binding.txtTimer.text = (millisUntilFinished/1000).toString()
+                }
+            }
+
+            override fun onFinish() {
+                Log.d("timer Reconnect", "Finish")
+                Log.d("timer Reconnect", "Restarting...")
+//                binding.txtTimer.text = "Restarting..."
+                startTimerReconnect()
             }
         }
 
@@ -122,7 +207,9 @@ class HomeFragment : BaseFragment<HomeViewModel, HomeFragmentBinding, ServiceRep
 
     private fun getNotifikasiGateway(){
         var companyId: String = runBlocking { userPreferences.getCompanyId().toString()}
-        viewModel._gateways.removeObservers(viewLifecycleOwner)
+        if( viewLifecycleOwner != null ){
+            viewModel._gateways.removeObservers(viewLifecycleOwner)
+        }
         viewModel.GetNotifikasiGateway(companyId, "", "10")
         viewModel._gateways.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
             when(it){
@@ -151,7 +238,7 @@ class HomeFragment : BaseFragment<HomeViewModel, HomeFragmentBinding, ServiceRep
                         message = "${data.title}\n\n${message}\n\n-$companyName-"
                         Log.d("sms_status:","trying to send...")
 
-                        val sdf = SimpleDateFormat("dd/M/yyyy hh:mm:ss")
+                        val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm:ss")
                         val currentDate = sdf.format(Date()).toString()
                         System.out.println(" C DATE is  "+currentDate)
 
@@ -180,16 +267,44 @@ class HomeFragment : BaseFragment<HomeViewModel, HomeFragmentBinding, ServiceRep
             }
         })
     }
+
+    private fun isNetworkAvailable(context: Context?): Boolean {
+        if (context == null){
+            Log.d("context","null")
+            return false
+        }
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
+            if (capabilities != null) {
+                when {
+                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> {
+                        return true
+                    }
+                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> {
+                        return true
+                    }
+                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> {
+                        return true
+                    }
+                }
+            }
+        } else {
+            val activeNetworkInfo = connectivityManager.activeNetworkInfo
+            if (activeNetworkInfo != null && activeNetworkInfo.isConnected) {
+                return true
+            }
+        }
+        return false
+    }
     private fun postupdategateway(id : String, idNotif: String, accountId: String ){
 //        sendSMS(phone, title, message)
-        binding.txtResponse.text = "Counting..."
         viewModel.Updategatewaysms(accountId, idNotif)
         viewModel._updategateways.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
             when (it) {
                 is Resource.Success-> {
                     var dbHelper = DbAdapter(requireContext()).TableOfflineAttendance()
                     dbHelper.deleteData(id)
-                    binding.txtDbLength.text = dbHelper.getAlltrxoffline().size.toString()
                 }
                 is Resource.Failure -> handleApiError(it) {
                 }
