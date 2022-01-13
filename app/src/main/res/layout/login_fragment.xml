@@ -109,18 +109,18 @@
                     android:textSize="12dp"
                     android:textColor="@color/white"
                     android:background="@drawable/bg_blue"/>
-            <ImageView
-                android:layout_marginTop="26dp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:background="@drawable/ic_powered_by"/>
-            <ImageView
-                android:layout_gravity="center"
-                android:layout_marginTop="5dp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/ic_bni"/>
+<!--            <ImageView-->
+<!--                android:layout_marginTop="26dp"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_gravity="center"-->
+<!--                android:background="@drawable/ic_powered_by"/>-->
+<!--            <ImageView-->
+<!--                android:layout_gravity="center"-->
+<!--                android:layout_marginTop="5dp"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:background="@drawable/ic_bni"/>-->
         </LinearLayout>
     </LinearLayout>
     </ScrollView>
