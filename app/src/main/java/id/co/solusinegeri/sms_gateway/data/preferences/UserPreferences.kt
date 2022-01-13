@@ -100,16 +100,33 @@ class UserPreferences (
             preferences.clear()
         }
     }
-    suspend fun saveproduct(userObj: String) {
+
+    fun getUsername():String?{
+        return runBlocking { username.first() }
+    }
+    val username: Flow<String?>
+        get() = dataStore.data.map { preferences ->
+            preferences[KEY_USERNAME]
+        }
+    suspend fun saveUsername(username: String) {
         dataStore.edit { preferences ->
-            preferences[USER_OBJECT] = userObj
+            preferences[KEY_USERNAME] = username
         }
     }
-    suspend fun saveUser(userObj: String) {
+
+    fun getPassword():String?{
+        return runBlocking { password.first() }
+    }
+    val password: Flow<String?>
+        get() = dataStore.data.map { preferences ->
+            preferences[KEY_PASSWORD]
+        }
+    suspend fun savePassword(password: String) {
         dataStore.edit { preferences ->
-            preferences[USER_OBJECT] = userObj
+            preferences[KEY_PASSWORD] = password
         }
     }
+
     companion object {
         private val KEY_AUTH = preferencesKey<String>("key_auth")
         private val USER_OBJECT = preferencesKey<String>(name = "userObj")
@@ -117,6 +134,10 @@ class UserPreferences (
         private val KEY_COMPANYID = preferencesKey<String>("keycompanyid")
         private val KEY_COMPANYNAME = preferencesKey<String>("keycompanyName")
         private val KEY_CREATORID = preferencesKey<String>("keycreatorid")
+
+        // login
+        private val KEY_USERNAME = preferencesKey<String>("keyusername")
+        private val KEY_PASSWORD = preferencesKey<String>("keypassword")
 
     }
 }

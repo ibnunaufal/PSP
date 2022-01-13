@@ -8,6 +8,7 @@ import id.co.solusinegeri.sms_gateway.data.networks.Resource
 import id.co.solusinegeri.sms_gateway.data.networks.ServiceApi
 import id.co.solusinegeri.sms_gateway.data.repository.ServiceRepository
 import id.co.solusinegeri.sms_gateway.data.responses.CheckCredentialResponse
+import id.co.solusinegeri.sms_gateway.data.responses.loginResponse
 import id.co.solusinegeri.sms_gateway.ui.base.BaseViewModel
 import kotlinx.coroutines.launch
 
@@ -22,5 +23,16 @@ class MainViewModel(
     fun getUser() = viewModelScope.launch {
         _user.value = Resource.Loading
         _user.value = repository.getCredentialInfo()
+    }
+    private val _loginResponse: MutableLiveData<Resource<loginResponse>> = MutableLiveData()
+    val loginResponse: LiveData<Resource<loginResponse>>
+        get() = _loginResponse
+
+    fun login(
+        username: String,
+        password: String
+    ) = viewModelScope.launch {
+        _loginResponse.value = Resource.Loading
+        _loginResponse.value = repository.login(username, password)
     }
 }

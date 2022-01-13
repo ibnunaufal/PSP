@@ -1,7 +1,12 @@
 package id.co.solusinegeri.sms_gateway.ui.auth
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.net.NetworkInfo
+import android.os.Build
 import androidx.lifecycle.ViewModelProvider
 import android.os.Bundle
 import android.util.Log
@@ -53,7 +58,11 @@ class LoginFragment: BaseFragment<LoginViewModel, LoginFragmentBinding, ServiceR
         }
         binding.btnLogin.setOnClickListener {
 
-            login()
+            if(isNetworkAvailable(activity)){
+                login()
+            }else{
+                requireView().snackbar("Mohon periksa kembali koneksi internet anda.")
+            }
         }
         if (ContextCompat.checkSelfPermission(requireContext(),
                 Manifest.permission.SEND_SMS) !==
@@ -67,6 +76,41 @@ class LoginFragment: BaseFragment<LoginViewModel, LoginFragmentBinding, ServiceR
                     arrayOf(Manifest.permission.SEND_SMS), 1)
             }
         }
+
+        var username = runBlocking { userPreferences.getUsername().toString() }
+        var password = runBlocking { userPreferences.getPassword().toString() }
+
+        if(username == "" || username.isNullOrEmpty()){
+            if(password == "" || password.isNullOrEmpty()){
+                autoLogin()
+            }
+        }
+    }
+    private fun isNetworkAvailable(context: Context?): Boolean {
+        if (context == null) return false
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
+            if (capabilities != null) {
+                when {
+                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> {
+                        return true
+                    }
+                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> {
+                        return true
+                    }
+                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> {
+                        return true
+                    }
+                }
+            }
+        } else {
+            val activeNetworkInfo = connectivityManager.activeNetworkInfo
+            if (activeNetworkInfo != null && activeNetworkInfo.isConnected) {
+                return true
+            }
+        }
+        return false
     }
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>,
                                             grantResults: IntArray) {
@@ -92,13 +136,14 @@ class LoginFragment: BaseFragment<LoginViewModel, LoginFragmentBinding, ServiceR
         binding.btnLogin.enable(false)
         var username =   view?.findViewById<EditText>(R.id.ed_username)?.text.toString().trim()
         var password =   view?.findViewById<EditText>(R.id.ed_password)?.text.toString().trim()
+        runBlocking { userPreferences.saveUsername(username) }
+        runBlocking { userPreferences.savePassword(password) }
         Log.d("data login :", username + password)
         viewModel.login(username, password)
         viewModel.loginResponse.observe(viewLifecycleOwner, Observer {
             binding.btnLogin.enable(true)
             when(it){
                 is  Resource.Success -> {
-                    progressDialog.dialog.dismiss()
                     Log.d("data login",it.toString())
                     val firstLogin = it.value.firstLogin
                     getUserCredentialInfo()
@@ -109,6 +154,26 @@ class LoginFragment: BaseFragment<LoginViewModel, LoginFragmentBinding, ServiceR
         })
 
     }
+
+    fun autoLogin(){
+        var username = runBlocking { userPreferences.getUsername().toString() }
+        var password = runBlocking { userPreferences.getPassword().toString() }
+        Log.d("data login :", username + password)
+        viewModel.login(username, password)
+        viewModel.loginResponse.observe(viewLifecycleOwner, Observer {
+            binding.btnLogin.enable(true)
+            when(it){
+                is  Resource.Success -> {
+                    Log.d("data login",it.toString())
+                    val firstLogin = it.value.firstLogin
+                    getUserCredentialInfo()
+                }
+                is Resource.Failure -> handleApiError(it)
+
+            }
+        })
+    }
+
     private fun getUserCredentialInfo() {
         viewModel.getUser()
         viewModel._users.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
@@ -128,10 +193,17 @@ class LoginFragment: BaseFragment<LoginViewModel, LoginFragmentBinding, ServiceR
                     runBlocking { userPreferences.saveCompanyId(companyId) }
                     runBlocking { userPreferences.saveCompanyName(companyName) }
                     val companyID = "5f80685c6860831471d5237d"
-                    lifecycleScope.launch {
-                        requireActivity().startNewActivity(HomeActivity::class.java)
-                        activity?.overridePendingTransition(0, 0)
 
+                    if(it.value.user.accounts[0].roles.contains("ROLE_DEVICE")){
+                        lifecycleScope.launch {
+                            requireActivity().startNewActivity(HomeActivity::class.java)
+                            activity?.overridePendingTransition(0, 0)
+                            progressDialog.dialog.dismiss()
+
+                        }
+                    }else{
+                        requireView().snackbar("Akun anda tidak memiliki akses login.")
+                        progressDialog.dialog.dismiss()
                     }
                 }
                 is Resource.Failure -> handleApiError(it) {

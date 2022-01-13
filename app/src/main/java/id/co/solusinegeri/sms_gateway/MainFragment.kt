@@ -1,5 +1,9 @@
 package id.co.solusinegeri.sms_gateway
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.os.Build
 import androidx.lifecycle.ViewModelProvider
 import android.os.Bundle
 import android.util.Log
@@ -23,13 +27,27 @@ class MainFragment : BaseFragment<MainViewModel,MainFragmentBinding,ServiceRepos
         super.onViewCreated(view, savedInstanceState)
         progressDialog.show(view.context)
         val token = runBlocking { userPreferences.authToken.first()}
+        val username = runBlocking { userPreferences.getUsername().toString() }
+        val password = runBlocking { userPreferences.getPassword().toString() }
 
         if (token == null){
-            requireActivity().startNewActivity(LoginActivity::class.java)
-            activity?.overridePendingTransition(0, 0)
-            progressDialog.dialog.dismiss()
+            if((username.isNullOrEmpty() && password.isNullOrEmpty()) || (username == ("") && password == (""))){
+                requireActivity().startNewActivity(LoginActivity::class.java)
+                activity?.overridePendingTransition(0, 0)
+                progressDialog.dialog.dismiss()
+            }else{
+                tryLogin(username, password)
+            }
         }else  {
-            viewModel.getUser()
+//            Log.d("network", isNetworkAvailable(context).toString())
+//            if(isNetworkAvailable(context)){
+                viewModel.getUser()
+//            }else{
+//                requireActivity().startNewActivity(LoginActivity::class.java)
+//                activity?.overridePendingTransition(0, 0)
+//                progressDialog.dialog.dismiss()
+//                requireView().snackbar("Mohon periksa kembali koneksi internet anda")
+//            }
         }
         viewModel.user.observe(viewLifecycleOwner, Observer {
             when(it){
@@ -57,6 +75,56 @@ class MainFragment : BaseFragment<MainViewModel,MainFragmentBinding,ServiceRepos
         })
 
 
+    }
+
+    private fun tryLogin(username: String, password: String){
+        viewModel.login(username, password)
+        viewModel.loginResponse.observe(viewLifecycleOwner, Observer {
+            when(it){
+                is  Resource.Success -> {
+                    Log.d("data login",it.toString())
+                    val firstLogin = it.value.firstLogin
+                    requireActivity().startNewActivity(HomeActivity::class.java)
+                    activity?.overridePendingTransition(0, 0)
+                    progressDialog.dialog.dismiss()
+                }
+                is Resource.Failure -> handleApiError(it)
+
+            }
+        })
+    }
+
+    fun directAutoLogin(){
+        requireActivity().startNewActivity(LoginActivity::class.java)
+        activity?.overridePendingTransition(0, 0)
+    }
+
+
+    private fun isNetworkAvailable(context: Context?): Boolean {
+        if (context == null) return false
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
+            if (capabilities != null) {
+                when {
+                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> {
+                        return true
+                    }
+                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> {
+                        return true
+                    }
+                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> {
+                        return true
+                    }
+                }
+            }
+        } else {
+            val activeNetworkInfo = connectivityManager.activeNetworkInfo
+            if (activeNetworkInfo != null && activeNetworkInfo.isConnected) {
+                return true
+            }
+        }
+        return false
     }
 
 

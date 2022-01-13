@@ -12,6 +12,7 @@ import com.google.android.material.snackbar.Snackbar
 import id.co.solusinegeri.sms_gateway.data.networks.Resource
 import id.co.solusinegeri.sms_gateway.ui.auth.LoginFragment
 import id.co.solusinegeri.sms_gateway.ui.base.BaseFragment
+import id.co.solusinegeri.sms_gateway.ui.home.HomeFragment
 
 lateinit var countdown_timer: CountDownTimer
 var isRunning: Boolean = false;
@@ -50,11 +51,15 @@ fun Fragment.handleApiError(
 ) {
     when {
         failure.isNetworkError -> {
-
+            if(this is MainFragment){
+                directAutoLogin()
+            }else if(this is HomeFragment){
+                requireView().snackbar("Mohon periksa kembali koneksi internet anda")
+            }
         }
         failure.errorCode == 401 -> {
             if (this is LoginFragment) {
-                requireView().snackbar("You've entered incorrect username or password")
+                requireView().snackbar("Username atau Password yang anda masukkan salah")
                 progressDialog.dialog.dismiss()
 
             } else {
@@ -66,6 +71,12 @@ fun Fragment.handleApiError(
         }
         failure.errorCode == 400 -> {
 
+        }
+        failure.errorCode == 403 -> {
+            if(this is MainFragment){
+                progressDialog.dialog.dismiss()
+                directAutoLogin()
+            }
         }
         failure.errorCode == 404 -> {
 
