@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import id.co.solusinegeri.sms_gateway.data.models.modelUpdateGateway
 import id.co.solusinegeri.sms_gateway.data.networks.Resource
 import id.co.solusinegeri.sms_gateway.data.repository.ServiceRepository
 import id.co.solusinegeri.sms_gateway.data.responses.CheckCredentialResponse
@@ -38,10 +39,11 @@ class HomeViewModel (
 
     fun Updategatewaysms(
         accountId : String,
-        idNotif: String
+        idNotif: String,
+        status: String
     ) = viewModelScope.launch {
         _updategateway.value = Resource.Loading
-        _updategateway.value = repository.Updategatewaysms(accountId, idNotif)
+        _updategateway.value = repository.Updategatewaysms(accountId, idNotif, status)
     }
 
 

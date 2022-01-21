@@ -94,6 +94,11 @@
                                 android:textColor="@color/black"
                                 android:textStyle="bold"
                                 android:textSize="18dp"/>
+                            <Button
+                                android:id="@+id/btn_delete"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Hapus Semua"/>
                         </LinearLayout>
                     <TextView
                         android:layout_width="match_parent"

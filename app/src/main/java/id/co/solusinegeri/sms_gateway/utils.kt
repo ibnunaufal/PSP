@@ -81,9 +81,16 @@ fun Fragment.handleApiError(
         failure.errorCode == 404 -> {
 
         }
+
+        failure.errorCode == 304 -> {
+            if (this is HomeFragment){
+                requireView().snackbar("")
+            }
+        }
         else -> {
             val error = failure.errorBody?.string().toString()
             requireView().snackbar(error)
+            Log.e("error", error)
         }
 
     }

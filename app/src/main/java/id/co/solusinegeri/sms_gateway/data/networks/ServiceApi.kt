@@ -30,6 +30,7 @@ interface ServiceApi {
     suspend fun Updategatewaysms(
 //        @Body info: modelUpdateGateway
         @Path("accountId") accountId: String?,
-        @Path("idNotif") idNotif: String?
+        @Path("idNotif") idNotif: String?,
+        @Query("status") status: String?
     ): UpdateGatewayResposes
 }

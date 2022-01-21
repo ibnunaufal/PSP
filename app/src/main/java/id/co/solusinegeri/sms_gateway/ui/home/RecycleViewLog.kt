@@ -1,6 +1,7 @@
 package id.co.solusinegeri.sms_gateway.ui.home
 
 import android.content.Context
+import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -94,6 +95,11 @@ class RecycleViewLog (
                 holder.itemView.txt_item_title.text = resultItem.title
                 holder.itemView.txt_item_phone.text = resultItem.phone
                 holder.itemView.txt_datetime.text = resultItem.dateTime
+                holder.itemView.txt_status.text = resultItem.status
+                var x = resultItem.status
+                if(x != "SMS_DELIVERED" && x  != "SMS_SENT"){
+                    holder.itemView.txt_status.setTextColor(Color.parseColor("#ff0000"))
+                }
             }catch (e : Exception){
             }
 //            holder.itemView.clickitem.setOnClickListener{

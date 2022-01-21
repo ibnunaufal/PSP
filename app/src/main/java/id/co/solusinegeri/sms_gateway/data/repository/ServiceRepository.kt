@@ -26,10 +26,11 @@ class ServiceRepository(
     }
     suspend fun Updategatewaysms(
         accountId : String,
-        idNotif: String
+        idNotif: String,
+        status: String
     ) = safeApiCall {
 //        api.Updategatewaysms(modelUpdateGateway(accountId, idNotif))
-        api.Updategatewaysms(accountId, idNotif)
+        api.Updategatewaysms(accountId, idNotif, status)
     }
 
 }

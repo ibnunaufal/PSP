@@ -9,5 +9,7 @@ class ContentLog (
     var title: String,
     var message: String,
     var phone : String,
-    var dateTime: String
+    var dateTime: String,
+    var synced: String,
+    var status: String
 )

@@ -50,9 +50,11 @@ import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.Handler
 import android.widget.AdapterView
+import id.co.solusinegeri.sms_gateway.data.models.modelUpdateGateway
 import id.co.solusinegeri.sms_gateway.snackbar
 import id.co.solusinegeri.sms_gateway.visible
 import java.text.SimpleDateFormat
+import kotlin.collections.ArrayList
 
 class HomeFragment : BaseFragment<HomeViewModel, HomeFragmentBinding, ServiceRepository>() {
     private var adapterTransaction by Delegates.notNull<RecycleViewLog>()
@@ -85,6 +87,19 @@ class HomeFragment : BaseFragment<HomeViewModel, HomeFragmentBinding, ServiceRep
         }
         binding.layoutReconnecting.visible(false)
         binding.txtCompanyName.text = runBlocking { userPreferences.getCompanyName() }
+        binding.btnDelete.setOnClickListener {
+            dbHelper.deleteAll()
+            var datatrx = dbHelper.getAlltrxoffline()
+
+            adapterTransaction = RecycleViewLog(
+                requireContext(),
+                datatrx
+            )
+            adapterTransaction.notifyDataSetChanged()
+            rvMain.layoutManager = LinearLayoutManager(requireContext())
+            rvMain.adapter = adapterTransaction
+            Log.d("deleting","deleting")
+        }
         binding.swipeRefreshLayout.setOnRefreshListener {
             binding.swipeRefreshLayout.setRefreshing(false)
         }
@@ -154,6 +169,9 @@ class HomeFragment : BaseFragment<HomeViewModel, HomeFragmentBinding, ServiceRep
                     Log.d("timer ", "Canceled ${millisUntilFinished/1000} $isCancelled")
                     cancel()
                 }else{
+                    if((millisUntilFinished/1000).toString() == "10"){
+                        syncData()
+                    }
                     Log.d("timer", timeRemaining)
 //                    binding.txtTimer.text = (millisUntilFinished/1000).toString()
                 }
@@ -233,6 +251,7 @@ class HomeFragment : BaseFragment<HomeViewModel, HomeFragmentBinding, ServiceRep
                                     contentt.toString())
                             }
                         }
+                        message.replace("<br>","\n")
                         Log.d("contentt :", contentt.toString())
                         Log.d("messagee :", message)
                         message = "${data.title}\n\n${message}\n\n-$companyName-"
@@ -242,15 +261,25 @@ class HomeFragment : BaseFragment<HomeViewModel, HomeFragmentBinding, ServiceRep
                         val currentDate = sdf.format(Date()).toString()
                         System.out.println(" C DATE is  "+currentDate)
 
-                        dbHelper.addAttoffline(data.id, data.accountId, data.accountName, data.category, data.title, message, newPhoneNumber, currentDate)
+                        dbHelper.addAttoffline(data.id, data.accountId, data.accountName,
+                            data.category, data.title, message, newPhoneNumber, currentDate, "QUEUE")
 
                         // trying to send SMS without delivered confirmation
                         val sentPI: PendingIntent = PendingIntent.getBroadcast(requireContext(), 0, Intent("SMS_SENT"), 0)
-                        val deliveredPI: PendingIntent = PendingIntent.getBroadcast(requireContext(), 0, Intent("SMS_DELIVERED"), 0)
-                        SmsManager.getDefault().sendTextMessage(newPhoneNumber, null, message, sentPI, deliveredPI)
+                        val notificationIntent = Intent()
+                        notificationIntent.putExtra("fromNotification", data.id)
 
-                        postupdategateway(data.id, data.id, data.accountId)
+                        val deliveredIntent = Intent()
+                        deliveredIntent.putExtra("delivered", data.id)
+
+                        val deliveredPI: PendingIntent = PendingIntent.getBroadcast(requireContext(), 0, deliveredIntent, 0)
+
+//                        SmsManager.getDefault().sendTextMessage(newPhoneNumber, null, message, sentPI, deliveredPI)
+
+//                        postupdategateway(data.id, data.accountId)
                     }
+                    var homeActivity: HomeActivity = activity as HomeActivity
+                    homeActivity.sendingSms(it.value)
                     var datatrx = dbHelper.getAlltrxoffline()
 
                     adapterTransaction = RecycleViewLog(
@@ -260,6 +289,11 @@ class HomeFragment : BaseFragment<HomeViewModel, HomeFragmentBinding, ServiceRep
                     adapterTransaction.notifyDataSetChanged()
                     rvMain.layoutManager = LinearLayoutManager(requireContext())
                     rvMain.adapter = adapterTransaction
+                    var text = ""
+                    for(data in datatrx){
+                        text += "\n"+data.status + data.synced + data.idNotif
+                    }
+                    Log.d("getAll", text)
 
 
                 }
@@ -297,14 +331,41 @@ class HomeFragment : BaseFragment<HomeViewModel, HomeFragmentBinding, ServiceRep
         }
         return false
     }
-    private fun postupdategateway(id : String, idNotif: String, accountId: String ){
+
+    private fun syncData(){
+        var dbHelper = DbAdapter(requireContext()).TableOfflineAttendance()
+        var data = dbHelper.getSynced()
+        for (data in data){
+            Log.d("checkFor", "${data.status} ${data.message} ${data.synced}")
+            if(data.status != "QUEUE" && data.synced == "false") {
+                if(data.status == "SMS_SENT"){
+                    postupdategateway(data.idNotif, data.accountId, "SENT")
+                }else{
+                    postupdategateway(data.idNotif, data.accountId, "FAILED")
+                }
+            }else{
+                Log.d("checkFor", "Masih proses")
+            }
+        }
+    }
+
+    fun postupdategateway(idNotif: String, accountId: String, status: String ){
 //        sendSMS(phone, title, message)
-        viewModel.Updategatewaysms(accountId, idNotif)
+
+        viewModel.Updategatewaysms(accountId, idNotif, status)
         viewModel._updategateways.observe(viewLifecycleOwner, androidx.lifecycle.Observer {
             when (it) {
                 is Resource.Success-> {
                     var dbHelper = DbAdapter(requireContext()).TableOfflineAttendance()
-                    dbHelper.deleteData(id)
+                    dbHelper.updateSynced(idNotif)
+                    var datatrx = dbHelper.getAlltrxoffline()
+                    adapterTransaction = RecycleViewLog(
+                        requireContext(),
+                        datatrx
+                    )
+                    adapterTransaction.notifyDataSetChanged()
+                    rvMain.layoutManager = LinearLayoutManager(requireContext())
+                    rvMain.adapter = adapterTransaction
                 }
                 is Resource.Failure -> handleApiError(it) {
                 }

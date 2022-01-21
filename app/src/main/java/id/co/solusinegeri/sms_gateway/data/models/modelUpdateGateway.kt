@@ -4,6 +4,5 @@ import androidx.annotation.Keep
 
 @Keep
 data class modelUpdateGateway(
-    val accountId : String,
-    val idNotif: String
+    val status: String
 )
