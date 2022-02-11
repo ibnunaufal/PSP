@@ -8,7 +8,7 @@
 
     <fragment
         android:id="@+id/fragmentContainerView2"
-        android:name="id.co.solusinegeri.sms_gateway.ui.home.HomeFragment"
+        android:name="id.co.solusinegeri.psp.ui.home.HomeFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:layout_editor_absoluteX="184dp"

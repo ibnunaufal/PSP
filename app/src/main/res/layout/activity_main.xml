@@ -7,7 +7,7 @@
     tools:context=".MainActivity">
     <fragment
         android:id="@+id/fragmentContainerView"
-        android:name="id.co.solusinegeri.sms_gateway.MainFragment"
+        android:name="id.co.solusinegeri.psp.MainFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_constraintEnd_toEndOf="parent"
