@@ -17,6 +17,7 @@ import id.co.solusinegeri.psp.databinding.MainFragmentBinding
 import id.co.solusinegeri.psp.ui.auth.LoginActivity
 import id.co.solusinegeri.psp.ui.base.BaseFragment
 import id.co.solusinegeri.psp.ui.home.HomeActivity
+import id.co.solusinegeri.psp.ui.tab.TabActivity
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 
@@ -61,7 +62,7 @@ class MainFragment : BaseFragment<MainViewModel,MainFragmentBinding,ServiceRepos
                     runBlocking { userPreferences.saveCompanyId(companyId.toString())}
 
 
-                        requireActivity().startNewActivity(HomeActivity::class.java)
+                        requireActivity().startNewActivity(TabActivity::class.java)
                         activity?.overridePendingTransition(0, 0)
                         progressDialog.dialog.dismiss()
 

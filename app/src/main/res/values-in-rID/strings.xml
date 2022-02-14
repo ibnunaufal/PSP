@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Katalis Gateway</string>
+    <string name="negara">PT.TEKNOLOGI KARTU INDONESIA</string>
+    <string name="log">Log</string>
+    <string name="login">Login</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="lupa_kata_sandi">Lupa Kata Sandi ?</string>
+</resources>

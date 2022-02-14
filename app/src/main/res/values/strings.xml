@@ -5,5 +5,6 @@
     <string name="login">Login</string>
     <string name="username">Username</string>
     <string name="password">Password</string>
-    <string name="lupa_kata_sandi">Lupa Kata Sandi ?</string>
+    <string name="lupa_kata_sandi">Forgot Password?</string>
+    <string name="cs" translatable="false">Customer Service</string>
 </resources>

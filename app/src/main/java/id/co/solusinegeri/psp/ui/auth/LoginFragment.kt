@@ -24,29 +24,13 @@ import id.co.solusinegeri.psp.data.repository.ServiceRepository
 import id.co.solusinegeri.psp.databinding.LoginFragmentBinding
 import id.co.solusinegeri.psp.ui.base.BaseFragment
 import id.co.solusinegeri.psp.ui.home.HomeActivity
+import id.co.solusinegeri.psp.ui.tab.TabActivity
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 class LoginFragment: BaseFragment<LoginViewModel, LoginFragmentBinding, ServiceRepository>() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        binding.btnLogin.enable(false)
-        binding.edPassword.addTextChangedListener {
-            val user = binding.edUsername.text.toString().trim()
-            val password = binding.edPassword.text.toString().trim()
-            binding.btnLogin.enable(
-                password.isNotEmpty() && user.isNotEmpty() && it.toString()
-                    .isNotEmpty()
-            )
-        }
-        binding.edUsername.addTextChangedListener {
-            val user = binding.edUsername.text.toString().trim()
-            val password = binding.edPassword.text.toString().trim()
-            binding.btnLogin.enable(
-                password.isNotEmpty() && user.isNotEmpty() && it.toString()
-                    .isNotEmpty()
-            )
-        }
         binding.btnForgotPassword.setOnClickListener {
 //            val intent = Intent(activity, ForgotPassActivity::class.java);
 //            startActivity(intent)
@@ -189,9 +173,10 @@ class LoginFragment: BaseFragment<LoginViewModel, LoginFragmentBinding, ServiceR
                     runBlocking { userPreferences.saveCompanyName(companyName) }
                     val companyID = "5f80685c6860831471d5237d"
 
-                    if(it.value.user.accounts[0].roles.contains("ROLE_DEVICE")){
+                    if(it.value.user.accounts[0].roles.contains("ROLE_USER")){
                         lifecycleScope.launch {
-                            requireActivity().startNewActivity(HomeActivity::class.java)
+//                            requireActivity().startNewActivity(HomeActivity::class.java)
+                            requireActivity().startNewActivity(TabActivity::class.java)
                             activity?.overridePendingTransition(0, 0)
                             progressDialog.dialog.dismiss()
 
